@@ -1,0 +1,37 @@
+{
+  "name": "video_indexing_bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for indexing video information in groups",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "index-videos": "ts-node src/indexOldVideos.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "video",
+    "indexing"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@types/big-integer": "^0.0.30",
+    "big-integer": "^1.6.52",
+    "dotenv": "^16.6.1",
+    "input": "^1.0.1",
+    "sequelize": "^6.32.1",
+    "sqlite3": "^5.1.6",
+    "telegraf": "^4.12.2",
+    "telegram": "^2.19.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.4",
+    "@types/sqlite3": "^3.1.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}
