@@ -1,18 +1,24 @@
-# fly.toml app configuration file generated for video-indexing-bot on 2025-08-27
+# fly.toml app configuration file generated for video-indexing-bot on 2025-08-27T17:12:22+07:00
+#
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "video-indexing-bot"
-primary_region = "sin"
+app = 'video-indexing-bot'
+primary_region = 'sin'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "3000"
+  PORT = '3000'
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -1,0 +1,21 @@
+# flyctl launch added from .gitignore
+# Dependencies
+**/node_modules
+
+# Build output
+**/dist
+
+# Environment variables
+**/.env
+
+# IDE files
+**/.vscode
+**/.idea
+
+# Logs
+**/*.log
+
+# Database
+**/*.db
+**/*.sqlite
+fly.toml
