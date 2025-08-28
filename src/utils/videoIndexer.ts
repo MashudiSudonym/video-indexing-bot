@@ -1,6 +1,7 @@
 import { Telegraf, Context } from 'telegraf';
 import { Video } from '../models/video';
 import videoService from '../services/videoService';
+import autoDeleteService from '../services/autoDeleteService';
 
 interface MessageWithVideo {
   message_id: number;
@@ -21,7 +22,7 @@ class VideoIndexer {
         const date = new Date(ctx.message.date * 1000);
 
         // Simpan informasi video ke database
-        await videoService.saveVideo({
+        const savedVideo = await videoService.saveVideo({
           file_id: video.file_id,
           file_name: video.file_name,
           duration: video.duration,

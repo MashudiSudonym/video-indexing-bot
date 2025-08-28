@@ -50,19 +50,53 @@ class UserBotService {
     console.log('Session string:', this.stringSession.save());
   }
 
-  // Index video lama dari grup tertentu
-  async indexOldVideosFromGroup(groupId: number, limit: number = 1000): Promise<void> {
+  // Index video lama dari grup/channel tertentu
+  async indexOldVideosFromGroup(groupId: number, limit: number = 0): Promise<void> {
     try {
-      console.log(`Starting to index old videos from group ${groupId}`);
+      console.log(`Starting to index old videos from group/channel ${groupId}`);
       
       let offsetId = 0;
       let totalIndexed = 0;
       let processedMessages = 0;
       
+      // Coba dapatkan entity untuk group/channel
+      let peer;
+      try {
+        const entity = await this.client.getEntity(groupId);
+        peer = await this.client.getInputEntity(entity);
+        console.log(`Successfully got peer for group ${groupId}`);
+      } catch (entityError) {
+        console.log(`Could not get entity directly, trying alternative methods: ${entityError}`);
+        
+        // Fallback: coba dengan pendekatan berbeda berdasarkan tanda ID
+        if (groupId < 0) {
+          // Untuk supergroup, ID biasanya negatif besar
+          if (groupId < -1000000000000) {
+            // Channel/SuperGroup
+            const channelId = Math.abs(groupId) - 1000000000000;
+            peer = new Api.InputPeerChannel({ 
+              channelId: BigInt(channelId) as unknown as BigInteger,
+              accessHash: BigInt(0) as unknown as BigInteger
+            });
+          } else {
+            // Chat biasa
+            peer = new Api.InputPeerChat({ 
+              chatId: BigInt(Math.abs(groupId)) as unknown as BigInteger 
+            });
+          }
+        } else {
+          // Untuk ID positif, biasanya channel
+          peer = new Api.InputPeerChannel({ 
+            channelId: BigInt(groupId) as unknown as BigInteger,
+            accessHash: BigInt(0) as unknown as BigInteger
+          });
+        }
+      }
+      
       while (true) {
-        // Dapatkan riwayat pesan dari grup
+        // Dapatkan riwayat pesan dari grup/channel
         const messages = await this.client.getMessages(
-          new Api.InputPeerChat({ chatId: BigInt(groupId) as unknown as BigInteger }),
+          peer,
           {
             limit: 100, // Proses 100 pesan per batch
             offsetId: offsetId,
@@ -158,18 +192,45 @@ class UserBotService {
     console.log('User Bot authenticated with saved session');
   }
 
-  // Dapatkan informasi grup
+  // Dapatkan informasi grup/channel
   async getGroups(): Promise<any[]> {
     const dialogs = await this.client.getDialogs();
     const groups = [];
     
     for (const dialog of dialogs) {
-      if (dialog.entity instanceof Api.Chat || dialog.entity instanceof Api.Channel) {
-        groups.push({
-          id: dialog.entity.id.toString(),
-          title: dialog.entity.title || 'Unknown',
-          type: dialog.entity instanceof Api.Chat ? 'Chat' : 'Channel'
-        });
+      // Channel/Supergroup
+      if (dialog.entity instanceof Api.Channel) {
+        // Hanya sertakan channel/grup yang bisa diakses
+        if (!(dialog.entity as any).left) { // Jika bukan channel yang sudah keluar
+          // Format ID yang benar untuk supergroup/channel
+          let id;
+          const entityId = parseInt(dialog.entity.id.toString());
+          if (dialog.entity.megagroup) {
+            // Supergroup
+            id = -(entityId + 1000000000000);
+          } else {
+            // Channel
+            id = -(entityId + 1000000000000);
+          }
+          
+          groups.push({
+            id: id.toString(),
+            title: dialog.entity.title || 'Unknown Channel',
+            type: dialog.entity.megagroup ? 'Supergroup' : 'Channel'
+          });
+        }
+      }
+      // Chat biasa
+      else if (dialog.entity instanceof Api.Chat) {
+        // Hanya sertakan chat yang aktif
+        if (!(dialog.entity as any).left && !(dialog.entity as any).kicked) {
+          const entityId = parseInt(dialog.entity.id.toString());
+          groups.push({
+            id: (-entityId).toString(),
+            title: dialog.entity.title || 'Unknown Chat',
+            type: 'Chat'
+          });
+        }
       }
     }
     

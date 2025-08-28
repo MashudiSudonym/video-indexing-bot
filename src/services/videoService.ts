@@ -75,6 +75,13 @@ class VideoService {
   async getTotalVideos(): Promise<number> {
     return await Video.count();
   }
+
+  // Mendapatkan video terbaru
+  async getLatestVideo(): Promise<Video | null> {
+    return await Video.findOne({
+      order: [['createdAt', 'DESC']],
+    });
+  }
 }
 
 export default new VideoService();

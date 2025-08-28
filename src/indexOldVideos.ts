@@ -54,6 +54,11 @@ async function indexOldVideos() {
     console.log('Fetching groups...');
     const groups = await userBot.getGroups();
     
+    if (groups.length === 0) {
+      console.log('No groups found. Make sure the user bot is a member of at least one group.');
+      process.exit(1);
+    }
+    
     console.log('Available groups:');
     groups.forEach((group, index) => {
       console.log(`${index + 1}. ${group.title} (ID: ${group.id}, Type: ${group.type})`);
@@ -66,11 +71,20 @@ async function indexOldVideos() {
     if (!groupId) {
       console.log('Please provide group ID as command line argument');
       console.log('Usage: npm run index-videos <group_id> [limit]');
+      console.log('Example: npm run index-videos -1001234567890');
+      process.exit(1);
+    }
+    
+    // Validasi ID grup
+    const groupIdNum = parseInt(groupId);
+    if (isNaN(groupIdNum)) {
+      console.log('Invalid group ID. Please provide a valid numeric ID.');
       process.exit(1);
     }
     
     // Index video dari grup yang ditentukan
-    await userBot.indexOldVideosFromGroup(parseInt(groupId), limit);
+    console.log(`Starting to index videos from group ${groupId}`);
+    await userBot.indexOldVideosFromGroup(groupIdNum, limit);
     
     console.log('Video indexing completed.');
     process.exit(0);

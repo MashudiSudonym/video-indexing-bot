@@ -3,6 +3,7 @@ import { sequelize } from './models/video';
 import { TELEGRAM_BOT_TOKEN } from './config/env';
 import videoIndexer from './utils/videoIndexer';
 import commandHandler from './handlers/commandHandler';
+import autoDeleteService from './services/autoDeleteService';
 
 // Validasi token bot
 if (!TELEGRAM_BOT_TOKEN) {
@@ -59,10 +60,29 @@ bot.catch((err, ctx) => {
   console.error(`Error untuk ${ctx.updateType}:`, err);
 });
 
+// Handler untuk callback query (gallery navigation)
+bot.on('callback_query', async (ctx) => {
+  if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) {
+    return;
+  }
+  
+  const data = ctx.callbackQuery.data;
+  
+  // Cek apakah callback adalah untuk gallery navigation
+  if (data.startsWith('gallery_')) {
+    // Untuk saat ini, kita hanya akan memberikan respons sederhana
+    // Implementasi penuh akan memerlukan penyimpanan state pencarian
+    await ctx.answerCbQuery('Navigasi gallery akan segera tersedia!');
+  }
+});
+
 // Fungsi untuk menjalankan bot
 async function startBot() {
   // Sinkronisasi database terlebih dahulu
   await syncDatabase();
+  
+  // Inisialisasi auto-delete service
+  autoDeleteService.initialize(bot);
   
   // Jalankan bot
   bot.launch()
@@ -75,8 +95,14 @@ async function startBot() {
     });
 
   // Enable graceful stop
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  process.once('SIGINT', () => {
+    bot.stop('SIGINT');
+    autoDeleteService.stopAutoDeleteScheduler();
+  });
+  process.once('SIGTERM', () => {
+    bot.stop('SIGTERM');
+    autoDeleteService.stopAutoDeleteScheduler();
+  });
 }
 
 // Jalankan bot

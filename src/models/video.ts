@@ -19,6 +19,7 @@ class Video extends Model {
   public message_id!: number;
   public chat_id!: number;
   public date!: Date;
+  public response_message_id!: number; // untuk menyimpan message_id response bot
 
   // timestamps
   public readonly createdAt!: Date;
@@ -63,6 +64,10 @@ Video.init({
   date: {
     type: DataTypes.DATE,
     allowNull: false,
+  },
+  response_message_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   },
 }, {
   sequelize,

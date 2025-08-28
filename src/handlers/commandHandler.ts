@@ -1,5 +1,7 @@
 import { Context } from 'telegraf';
 import videoService from '../services/videoService';
+import autoDeleteService from '../services/autoDeleteService';
+import galleryHelper from '../utils/galleryHelper';
 
 class CommandHandler {
   // Menangani perintah /start
@@ -19,7 +21,14 @@ Saya akan mengindex video yang ada di grup ini, baik yang sudah ada sebelum saya
 💡 Kirimkan video ke grup ini untuk diindex!
     `;
 
-    await ctx.reply(welcomeMessage, { parse_mode: 'Markdown' });
+    const sentMessage = await ctx.reply(welcomeMessage, { parse_mode: 'Markdown' });
+    
+    // Simpan message_id response untuk auto-delete
+    // Untuk pesan start, kita bisa menyimpan ID dari video terbaru sebagai contoh
+    const latestVideo = await videoService.getLatestVideo();
+    if (latestVideo) {
+      await autoDeleteService.saveResponseMessageId(latestVideo.id, sentMessage.message_id);
+    }
   }
 
   // Menangani perintah /search
@@ -39,22 +48,32 @@ Saya akan mengindex video yang ada di grup ini, baik yang sudah ada sebelum saya
         return;
       }
 
-      let response = `Ditemukan ${videos.length} video dengan nama mengandung "${query}":
-`;
+      // Membuat gallery untuk halaman pertama
+      const itemsPerPage = 5;
+      const currentPage = 1;
+      const videosForPage = galleryHelper.getVideosForPage(videos, currentPage, itemsPerPage);
       
-      for (const video of videos) {
-        response += `🎬 *${video.file_name || 'Tanpa Nama'}*
-`;
-        response += `⏱ Durasi: ${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}
-`;
-        response += `📅 Diupload: ${video.date.toLocaleDateString('id-ID')}
-`;
-        response += `[Lihat Video](https://t.me/c/${video.chat_id.toString().replace('-100', '')}/${video.message_id})
-
-`;
+      const galleryMessage = galleryHelper.createGalleryMessage(videos, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const galleryKeyboard = galleryHelper.createGalleryKeyboard(videosForPage, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const sentMessage = await ctx.reply(galleryMessage, {
+        parse_mode: 'Markdown',
+        ...galleryKeyboard
+      });
+      
+      // Simpan message_id response untuk auto-delete
+      if (videos.length > 0) {
+        await autoDeleteService.saveResponseMessageId(videos[0].id, sentMessage.message_id);
       }
-
-      await ctx.reply(response, { parse_mode: 'Markdown' });
     } catch (error) {
       console.error('Error searching videos:', error);
       await ctx.reply('Terjadi kesalahan saat mencari video');
@@ -84,16 +103,32 @@ Saya akan mengindex video yang ada di grup ini, baik yang sudah ada sebelum saya
         return;
       }
 
-      let response = `Ditemukan ${videos.length} video dengan durasi ${duration} menit:\n\n`;
+      // Membuat gallery untuk halaman pertama
+      const itemsPerPage = 5;
+      const currentPage = 1;
+      const videosForPage = galleryHelper.getVideosForPage(videos, currentPage, itemsPerPage);
       
-      for (const video of videos) {
-        response += `🎬 *${video.file_name || 'Tanpa Nama'}*\n`;
-        response += `⏱ Durasi: ${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}\n`;
-        response += `📅 Diupload: ${video.date.toLocaleDateString('id-ID')}\n`;
-        response += `[Lihat Video](https://t.me/c/${video.chat_id.toString().replace('-100', '')}/${video.message_id})\n\n`;
+      const galleryMessage = galleryHelper.createGalleryMessage(videos, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const galleryKeyboard = galleryHelper.createGalleryKeyboard(videosForPage, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const sentMessage = await ctx.reply(galleryMessage, {
+        parse_mode: 'Markdown',
+        ...galleryKeyboard
+      });
+      
+      // Simpan message_id response untuk auto-delete
+      if (videos.length > 0) {
+        await autoDeleteService.saveResponseMessageId(videos[0].id, sentMessage.message_id);
       }
-
-      await ctx.reply(response, { parse_mode: 'Markdown' });
     } catch (error) {
       console.error('Error searching videos by duration:', error);
       await ctx.reply('Terjadi kesalahan saat mencari video berdasarkan durasi');
@@ -133,16 +168,32 @@ Saya akan mengindex video yang ada di grup ini, baik yang sudah ada sebelum saya
         return;
       }
 
-      let response = `Ditemukan ${videos.length} video dengan durasi antara ${minDuration} - ${maxDuration} menit:\n\n`;
+      // Membuat gallery untuk halaman pertama
+      const itemsPerPage = 5;
+      const currentPage = 1;
+      const videosForPage = galleryHelper.getVideosForPage(videos, currentPage, itemsPerPage);
       
-      for (const video of videos) {
-        response += `🎬 *${video.file_name || 'Tanpa Nama'}*\n`;
-        response += `⏱ Durasi: ${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}\n`;
-        response += `📅 Diupload: ${video.date.toLocaleDateString('id-ID')}\n`;
-        response += `[Lihat Video](https://t.me/c/${video.chat_id.toString().replace('-100', '')}/${video.message_id})\n\n`;
+      const galleryMessage = galleryHelper.createGalleryMessage(videos, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const galleryKeyboard = galleryHelper.createGalleryKeyboard(videosForPage, {
+        currentPage,
+        itemsPerPage,
+        totalItems: videos.length
+      });
+      
+      const sentMessage = await ctx.reply(galleryMessage, {
+        parse_mode: 'Markdown',
+        ...galleryKeyboard
+      });
+      
+      // Simpan message_id response untuk auto-delete
+      if (videos.length > 0) {
+        await autoDeleteService.saveResponseMessageId(videos[0].id, sentMessage.message_id);
       }
-
-      await ctx.reply(response, { parse_mode: 'Markdown' });
     } catch (error) {
       console.error('Error searching videos by duration range:', error);
       await ctx.reply('Terjadi kesalahan saat mencari video berdasarkan range durasi');
@@ -162,7 +213,14 @@ Saya akan mengindex video yang ada di grup ini, baik yang sudah ada sebelum saya
 Video yang diindex akan terus bertambah setiap kali ada video baru di grup ini.
       `;
       
-      await ctx.reply(response, { parse_mode: 'Markdown' });
+      const sentMessage = await ctx.reply(response, { parse_mode: 'Markdown' });
+      
+      // Simpan message_id response untuk auto-delete
+      // Untuk statistik, kita bisa menyimpan ID dari video terbaru sebagai contoh
+      const latestVideo = await videoService.getLatestVideo();
+      if (latestVideo) {
+        await autoDeleteService.saveResponseMessageId(latestVideo.id, sentMessage.message_id);
+      }
     } catch (error) {
       console.error('Error getting stats:', error);
       await ctx.reply('Terjadi kesalahan saat mengambil statistik');
